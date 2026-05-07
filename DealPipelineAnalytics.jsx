@@ -1,47 +1,53 @@
 // DealPipelineAnalytics.jsx
-// Main layout component — compose all sub-components here
-// Install deps: npm install @mui/material @emotion/react @emotion/styled recharts
+// Root layout — manages query state and wires everything together
+// No external API calls — all filtering is local via queryEngine.js
 
-import { Box, Typography, Divider } from "@mui/material";
-import { BarChart2 } from "lucide-react";
-import StatsCards from "./StatsCards";
+import { useState, useCallback } from "react";
+import { Box, Typography, Divider, Chip } from "@mui/material";
+import BarChartIcon from "@mui/icons-material/BarChart";
+import StatsCards     from "./StatsCards";
 import DealStatsChart from "./DealStatsChart";
-import PromptPanel from "./PromptPanel";
+import PromptPanel    from "./PromptPanel";
+import {
+  parseQuery,
+  aggregateByMonth,
+  computeStats,
+  ALL_DEALS,
+} from "./queryEngine";
 
-// ─── Mock data (swap with real API responses later) ──────────────────────────
-const STATS = {
-  totalRevenue: 1_000_000,
-  activeDeals: 30,
-  wonDeals: 50,
-  averageDealSize: 20_000,
+// ─── Default (unfiltered) state ───────────────────────────────────────────────
+const DEFAULT_STATE = {
+  deals:     ALL_DEALS,
+  chartData: aggregateByMonth(ALL_DEALS),
+  stats:     computeStats(ALL_DEALS),
+  label:     "All Deals",
+  count:     ALL_DEALS.length,
 };
-
-const CHART_DATA = [
-  { month: "Jul 2022", deals: 5,  revenue: 110000 },
-  { month: "Oct 2022", deals: 8,  revenue: 180000 },
-  { month: "Jan 2023", deals: 12, revenue: 240000 },
-  { month: "Apr 2023", deals: 7,  revenue: 150000 },
-  { month: "Jul 2023", deals: 15, revenue: 310000 },
-  { month: "Oct 2023", deals: 20, revenue: 420000 },
-  { month: "Jan 2024", deals: 18, revenue: 390000 },
-  { month: "Apr 2024", deals: 25, revenue: 510000 },
-  { month: "Jul 2024", deals: 30, revenue: 600000 },
-  { month: "Oct 2024", deals: 28, revenue: 560000 },
-  { month: "Jan 2025", deals: 35, revenue: 700000 },
-  { month: "Apr 2025", deals: 40, revenue: 800000 },
-];
 
 const SUGGESTIONS = [
   "Show total revenue for Q1",
   "What is the average deal size?",
   "List all active deals",
-  "Show top 5 won deals by month",
+  "Show top 5 won deals",
+  "Show deals in negotiation",
+  "Show 2024 closed won deals",
+  "Show deals by Priya",
+  "Top 3 largest deals",
 ];
 
 export default function DealPipelineAnalytics() {
-  const handlePromptSend = (prompt) => {
-    // TODO: wire up API call
-    console.log("Prompt sent:", prompt);
+  const [result,       setResult]       = useState(DEFAULT_STATE);
+  const [activePrompt, setActivePrompt] = useState("");
+
+  const handleSend = useCallback((prompt) => {
+    const parsed = parseQuery(prompt);
+    setResult(parsed);
+    setActivePrompt(prompt);
+  }, []);
+
+  const handleReset = () => {
+    setResult(DEFAULT_STATE);
+    setActivePrompt("");
   };
 
   return (
@@ -49,14 +55,14 @@ export default function DealPipelineAnalytics() {
       sx={{
         minHeight: "100vh",
         bgcolor: "#f0f4f8",
-        fontFamily: "'DM Sans', sans-serif",
         p: { xs: 2, md: 3 },
+        fontFamily: "'DM Sans', sans-serif",
       }}
     >
-      {/* ── Page Header ───────────────────────────── */}
+      {/* ── Header ──────────────────────────────────────── */}
       <Box sx={{ mb: 3 }}>
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.5 }}>
-          <BarChart2 size={28} color="#1565c0" strokeWidth={2} />
+          <BarChartIcon sx={{ color: "#1565c0", fontSize: 30 }} />
           <Typography
             variant="h4"
             fontWeight={700}
@@ -65,13 +71,30 @@ export default function DealPipelineAnalytics() {
             Deal Pipeline Analytics
           </Typography>
         </Box>
-        <Typography variant="body2" sx={{ color: "#607d8b", pl: 5 }}>
-          Use the prompt to filter your deal pipeline data
-        </Typography>
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1, pl: 5 }}>
+          <Typography variant="body2" sx={{ color: "#607d8b" }}>
+            Use the prompt to filter your deal pipeline data
+          </Typography>
+          {activePrompt && (
+            <Chip
+              label={`${result.label} (${result.count} deals)`}
+              size="small"
+              onDelete={handleReset}
+              sx={{
+                bgcolor: "#e3f2fd",
+                color: "#1565c0",
+                fontWeight: 600,
+                fontSize: 12,
+                "& .MuiChip-deleteIcon": { color: "#1565c0" },
+              }}
+            />
+          )}
+        </Box>
         <Divider sx={{ mt: 2 }} />
       </Box>
 
-      {/* ── Main Content Grid ─────────────────────── */}
+      {/* ── Main Grid ───────────────────────────────────── */}
       <Box
         sx={{
           display: "grid",
@@ -80,16 +103,20 @@ export default function DealPipelineAnalytics() {
           alignItems: "start",
         }}
       >
-        {/* Left Column — Stats + Charts */}
+        {/* Left: Stats + Chart */}
         <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-          <StatsCards stats={STATS} />
-          <DealStatsChart data={CHART_DATA} />
+          <StatsCards stats={result.stats} />
+          <DealStatsChart data={result.chartData} label={result.label} />
         </Box>
 
-        {/* Right Column — Prompt Panel */}
+        {/* Right: Prompt */}
         <PromptPanel
           suggestions={SUGGESTIONS}
-          onSend={handlePromptSend}
+          onSend={handleSend}
+          resultLabel={result.label}
+          resultCount={result.count}
+          hasActiveFilter={!!activePrompt}
+          onReset={handleReset}
         />
       </Box>
     </Box>

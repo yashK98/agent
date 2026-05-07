@@ -1,53 +1,50 @@
 // StatsCards.jsx
-// Displays the 4 summary KPI cards: Total Revenue, Active Deals, Won Deals, Average Deal Size
+// 4 KPI cards — driven by filtered stats from queryEngine
 
-import { Box, Card, CardContent, Typography, Skeleton } from "@mui/material";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import WorkOutlineIcon from "@mui/icons-material/WorkOutline";
-import EmojiEventsOutlinedIcon from "@mui/icons-material/EmojiEventsOutlined";
-import MonetizationOnOutlinedIcon from "@mui/icons-material/MonetizationOnOutlined";
+import { Card, CardContent, Typography, Box, Skeleton } from "@mui/material";
+import TrendingUpIcon              from "@mui/icons-material/TrendingUp";
+import WorkOutlineIcon             from "@mui/icons-material/WorkOutline";
+import EmojiEventsOutlinedIcon     from "@mui/icons-material/EmojiEventsOutlined";
+import MonetizationOnOutlinedIcon  from "@mui/icons-material/MonetizationOnOutlined";
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
-const formatCurrency = (value) =>
+const fmt = (v) =>
   new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
     maximumFractionDigits: 0,
-  }).format(value);
+  }).format(v);
 
-// ─── Card Config ──────────────────────────────────────────────────────────────
 const buildCards = (stats) => [
   {
-    label: "Total Revenue",
-    value: formatCurrency(stats.totalRevenue),
-    icon: TrendingUpIcon,
+    label:  "Total Revenue",
+    value:  fmt(stats.totalRevenue),
+    Icon:   TrendingUpIcon,
     accent: "#1565c0",
-    bg: "#e3f2fd",
+    bg:     "#e3f2fd",
   },
   {
-    label: "Active Deals",
-    value: stats.activeDeals,
-    icon: WorkOutlineIcon,
+    label:  "Active Deals",
+    value:  stats.activeDeals,
+    Icon:   WorkOutlineIcon,
     accent: "#e65100",
-    bg: "#fff3e0",
+    bg:     "#fff3e0",
   },
   {
-    label: "Won Deals",
-    value: stats.wonDeals,
-    icon: EmojiEventsOutlinedIcon,
+    label:  "Won Deals",
+    value:  stats.wonDeals,
+    Icon:   EmojiEventsOutlinedIcon,
     accent: "#2e7d32",
-    bg: "#e8f5e9",
+    bg:     "#e8f5e9",
   },
   {
-    label: "Average Deal Size",
-    value: formatCurrency(stats.averageDealSize),
-    icon: MonetizationOnOutlinedIcon,
+    label:  "Average Deal Size",
+    value:  fmt(stats.averageDealSize),
+    Icon:   MonetizationOnOutlinedIcon,
     accent: "#6a1b9a",
-    bg: "#f3e5f5",
+    bg:     "#f3e5f5",
   },
 ];
 
-// ─── Component ────────────────────────────────────────────────────────────────
 export default function StatsCards({ stats, loading = false }) {
   const cards = stats ? buildCards(stats) : [];
 
@@ -55,10 +52,7 @@ export default function StatsCards({ stats, loading = false }) {
     <Box
       sx={{
         display: "grid",
-        gridTemplateColumns: {
-          xs: "1fr 1fr",
-          sm: "repeat(4, 1fr)",
-        },
+        gridTemplateColumns: { xs: "1fr 1fr", sm: "repeat(4, 1fr)" },
         gap: 2,
       }}
     >
@@ -66,7 +60,7 @@ export default function StatsCards({ stats, loading = false }) {
         ? Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} variant="rounded" height={110} />
           ))
-        : cards.map(({ label, value, icon: Icon, accent, bg }) => (
+        : cards.map(({ label, value, Icon, accent, bg }) => (
             <Card
               key={label}
               elevation={0}
@@ -81,11 +75,9 @@ export default function StatsCards({ stats, loading = false }) {
               }}
             >
               <CardContent sx={{ p: 2.5, "&:last-child": { pb: 2.5 } }}>
-                {/* Icon badge */}
                 <Box
                   sx={{
-                    width: 40,
-                    height: 40,
+                    width: 40, height: 40,
                     borderRadius: 2,
                     bgcolor: bg,
                     display: "flex",
@@ -96,8 +88,6 @@ export default function StatsCards({ stats, loading = false }) {
                 >
                   <Icon sx={{ color: accent, fontSize: 22 }} />
                 </Box>
-
-                {/* Value */}
                 <Typography
                   variant="h5"
                   fontWeight={700}
@@ -105,8 +95,6 @@ export default function StatsCards({ stats, loading = false }) {
                 >
                   {value}
                 </Typography>
-
-                {/* Label */}
                 <Typography
                   variant="caption"
                   sx={{ color: "#607d8b", fontWeight: 500, letterSpacing: 0.3 }}
